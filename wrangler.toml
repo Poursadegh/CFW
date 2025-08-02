@@ -1,6 +1,7 @@
 name = "ai-itinerary-generator"
 main = "src/index.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
 
 [env.production]
 name = "ai-itinerary-generator-prod"
@@ -15,4 +16,4 @@ name = "ai-itinerary-generator-dev"
 name = "ai-itinerary-generator-local"
 
 [env.local.vars]
-OPENAI_API_KEY = "your_openai_api_key_here" 
+OPENAI_API_KEY = "your_opensk-proj-v099pWaiAZcuFypqW4p_TBpJExppNkyXk-1wDPVe-a9Q2xGoKAOugfzjZ-o7HFO2dmeITu1kfET3BlbkFJmYY7RWCkGIV8B6zriTAO_MdULcXNj9nVNXl35AGM7FdTJHbx2BYlCmP36tBPVLEV9ECnL2z2IA" 

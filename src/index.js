@@ -1,12 +1,11 @@
-import { initializeApp, getFirestore, doc, setDoc, updateDoc, serverTimestamp } from 'firebase-admin/firestore';
-import { credential } from 'firebase-admin/app';
+import admin from 'firebase-admin';
 import { z } from 'zod';
 
 const serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_KEY);
-const app = initializeApp({
-  credential: credential.cert(serviceAccount)
+const app = admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
 });
-const db = getFirestore(app);
+const db = app.firestore();
 
 const ActivitySchema = z.object({
   time: z.string(),
@@ -141,9 +140,9 @@ async function callOpenAI(prompt, retries = 3) {
 
 async function processItinerary(jobId, destination, durationDays) {
   try {
-    await updateDoc(doc(db, 'itineraries', jobId), {
+    await db.collection('itineraries').doc(jobId).update({
       status: 'processing',
-      updatedAt: serverTimestamp()
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
     const prompt = createPrompt(destination, durationDays);
@@ -153,22 +152,22 @@ async function processItinerary(jobId, destination, durationDays) {
       status: 'completed',
       destination,
       durationDays,
-      createdAt: serverTimestamp(),
-      completedAt: serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      completedAt: admin.firestore.FieldValue.serverTimestamp(),
       itinerary: aiResponse.itinerary,
       error: null
     };
 
     const validatedData = ItinerarySchema.parse(itineraryData);
-    await updateDoc(doc(db, 'itineraries', jobId), validatedData);
+    await db.collection('itineraries').doc(jobId).update(validatedData);
     
     console.log(`Itinerary completed for job ${jobId}`);
   } catch (error) {
     console.error(`Error processing itinerary for job ${jobId}:`, error);
     
-    await updateDoc(doc(db, 'itineraries', jobId), {
+    await db.collection('itineraries').doc(jobId).update({
       status: 'failed',
-      completedAt: serverTimestamp(),
+      completedAt: admin.firestore.FieldValue.serverTimestamp(),
       error: error.message
     });
   }
@@ -225,11 +224,11 @@ export default {
 
         const jobId = generateJobId();
         
-        await setDoc(doc(db, 'itineraries', jobId), {
+        await db.collection('itineraries').doc(jobId).set({
           status: 'processing',
           destination: body.destination,
           durationDays: body.durationDays,
-          createdAt: serverTimestamp(),
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
           completedAt: null,
           itinerary: [],
           error: null
@@ -265,10 +264,10 @@ export default {
         }
 
         try {
-          const docRef = doc(db, 'itineraries', jobId);
+          const docRef = db.collection('itineraries').doc(jobId);
           const docSnap = await docRef.get();
           
-          if (!docSnap.exists()) {
+          if (!docSnap.exists) {
             return new Response(JSON.stringify({
               error: 'Job not found'
             }), {

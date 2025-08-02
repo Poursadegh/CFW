@@ -17,6 +17,6 @@
     "postcss": "^8.4.0"
   },
   "dependencies": {
-    "lucide-svelte": "^0.263.0"
+    "lucide-svelte": "^0.344.0"
   }
 } 
