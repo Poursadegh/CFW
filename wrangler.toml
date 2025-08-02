@@ -1,0 +1,18 @@
+name = "ai-itinerary-generator"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[env.production]
+name = "ai-itinerary-generator-prod"
+
+[env.staging]
+name = "ai-itinerary-generator-staging"
+
+[env.development]
+name = "ai-itinerary-generator-dev"
+
+[env.local]
+name = "ai-itinerary-generator-local"
+
+[env.local.vars]
+OPENAI_API_KEY = "your_openai_api_key_here" 

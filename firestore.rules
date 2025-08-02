@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Itineraries collection - read-only for all users
+    match /itineraries/{jobId} {
+      allow read: if true;  // Anyone can read itinerary status
+      allow write: if false; // No direct writes from clients
+    }
+  }
+} 
