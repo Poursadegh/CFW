@@ -1,12 +1,6 @@
 import admin from 'firebase-admin';
 import { z } from 'zod';
 
-const serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_KEY);
-const app = admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-const db = app.firestore();
-
 const ActivitySchema = z.object({
   time: z.string(),
   description: z.string(),
@@ -79,7 +73,7 @@ Requirements:
 Return ONLY the JSON object, no other text.`;
 }
 
-async function callOpenAI(prompt, retries = 3) {
+async function callOpenAI(prompt, env, retries = 3) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const response = await fetch(OPENAI_API_URL, {
@@ -138,7 +132,13 @@ async function callOpenAI(prompt, retries = 3) {
   }
 }
 
-async function processItinerary(jobId, destination, durationDays) {
+async function processItinerary(jobId, destination, durationDays, env) {
+  const serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_KEY);
+  const app = admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+  const db = app.firestore();
+
   try {
     await db.collection('itineraries').doc(jobId).update({
       status: 'processing',
@@ -146,7 +146,7 @@ async function processItinerary(jobId, destination, durationDays) {
     });
 
     const prompt = createPrompt(destination, durationDays);
-    const aiResponse = await callOpenAI(prompt);
+    const aiResponse = await callOpenAI(prompt, env);
     
     const itineraryData = {
       status: 'completed',
@@ -224,6 +224,12 @@ export default {
 
         const jobId = generateJobId();
         
+        const serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_KEY);
+        const app = admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount)
+        });
+        const db = app.firestore();
+        
         await db.collection('itineraries').doc(jobId).set({
           status: 'processing',
           destination: body.destination,
@@ -234,7 +240,7 @@ export default {
           error: null
         });
 
-        ctx.waitUntil(processItinerary(jobId, body.destination, body.durationDays));
+        ctx.waitUntil(processItinerary(jobId, body.destination, body.durationDays, env));
 
         return new Response(JSON.stringify({
           jobId,
@@ -264,6 +270,12 @@ export default {
         }
 
         try {
+          const serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_KEY);
+          const app = admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+          });
+          const db = app.firestore();
+          
           const docRef = db.collection('itineraries').doc(jobId);
           const docSnap = await docRef.get();
           
